@@ -1,13 +1,12 @@
-#define ROWS 8
-#define COLS 8
+//#define ROWS 8
+//#define COLS 8
 
 #include "PTHeader.h"
-#include <iostream>
 #include <sstream>
 
 
 GameState::GameState() {
-	// Initialize the board for play
+	// Initialize the board for play with default 8x8
 	gameBoard.at(0) = { 'b','i','b','i','b','i','b','i' };
 	gameBoard.at(1) = { 'i','b','i','b','i','b','i','b' };
 	gameBoard.at(2) = { 'b','i','b','i','b','i','b','i' };
@@ -20,12 +19,52 @@ GameState::GameState() {
 	// Set current player to black and winning player to none
 	currentPlayer = 'b';
 	winningPlayer = 'n';
+	row = 8;
+	col = 8;
 
 	// Display the starting board
 	displayBoard();
 	std::cout << "\nPlayer is b, Computer is r\n";
 }
 
+GameState::GameState(int rows, int cols) {
+	// Set current player to black and winning player to none
+	currentPlayer = 'b';
+	winningPlayer = 'n';
+	row = rows;
+	col = cols;
+
+	//Initialize the board based on custom number of rows and columns
+	std::vector<std::vector<char>> iBoard;
+	for (int i = 0; i < row; i++)
+	{
+		char player;
+		if (i < 3)
+			player = 'b';
+		else if (i > row - 4)
+			player = 'r';
+		else
+			player = 'o';
+
+		std::vector<char> iRow(col);
+		for (int j = 0; j < col; j++)
+		{
+			if ((i+j) % 2 == 0)
+			{
+				iRow.at(j) = player;
+			}
+			else
+				iRow.at(j) = 'i';
+		}
+		iBoard.push_back (iRow);
+	}
+
+	gameBoard = iBoard;
+
+	// Display the starting board
+	displayBoard();
+	std::cout << "\nPlayer is b, Computer is r\n";
+}
 
 // Swap which player's turn it is
 char GameState::swapPlayer() {
@@ -45,6 +84,7 @@ char GameState::opponent() {
 		return 'b';
 }
 
+// TODO Fix this
 // Check that the player's move is valid. If it is, make the move and return true. Else return false. 
 bool GameState::playerMove() {
 	// Variables to hold player's move
@@ -137,15 +177,15 @@ bool GameState::playerMove() {
 void GameState::computerMove() {
 
 	// ToDo: Need to add computer's AI  --> AI IS STILL VERY NAIVE, AND DOES NOT DOUBLE JUMP
-	for (int i = 0; i < ROWS; ++i)
+	for (int i = 0; i < row; ++i)
 	{
-		for (int j = 0; j < COLS; ++j)
+		for (int j = 0; j < col; ++j)
 		{
 			if (gameBoard.at(i).at(j) == currentPlayer)
 			{
-				if ((i - 2) >= 0 && (i - 2) < 8)
+				if ((i - 2) >= 0 && (i - 2) < row)
 				{
-					if ((j + 2 < 8) && gameBoard.at(i - 2).at(j + 2) == 'o' && gameBoard.at(i - 1).at(j + 1) == opponent())
+					if ((j + 2 < col) && gameBoard.at(i - 2).at(j + 2) == 'o' && gameBoard.at(i - 1).at(j + 1) == opponent())
 					{
 						makeMove(i,j,i-2,j+2);
 						return;
@@ -156,9 +196,9 @@ void GameState::computerMove() {
 						return;
 					}
 				}
-				if (i - 1 >= 0 && i - 1 < 8)
+				if (i - 1 >= 0 && i - 1 < row)
 				{
-					if ((j + 1 < 8) && gameBoard.at(i - 1).at(j + 1) == 'o')
+					if ((j + 1 < col) && gameBoard.at(i - 1).at(j + 1) == 'o')
 					{
 						makeMove(i, j, i - 1, j + 1);
 						return;
@@ -179,12 +219,20 @@ void GameState::computerMove() {
 
 // Display the current game board
 void GameState::displayBoard() {
+	int character = 97;
 	std::ostringstream oss;
-	oss << "\n     a   b   c   d   e   f   g   h\n\n";
-	for (int i = 0; i < ROWS; ++i)
+	oss << "\n  ";
+	for (int i = 0; i < col; i++)
 	{
-		oss << (i + 1) << "  ";
-		for (int j = 0; j < COLS; ++j)
+		oss << "   " << char(character);
+		character++;
+	}
+	oss << "\n\n";
+	//oss << "\n     a   b   c   d   e   f   g   h\n\n";
+	for (int i = 0; i < row; ++i)
+	{
+		oss << std::setw(2) << (i + 1) << " ";
+		for (int j = 0; j < col; ++j)
 		{
 			oss << "| ";
 			if (gameBoard.at(i).at(j) == 'b' || gameBoard.at(i).at(j) == 'r')
@@ -197,7 +245,9 @@ void GameState::displayBoard() {
 				oss << "  ";
 			}
 		}
-		oss << "|\n   ---------------------------------\n";
+		oss << "|\n   ";
+		for (int k = 0; k < col; k++) { oss << "----"; }
+		oss << "-\n";
 	}
 	std::cout << oss.str() << std::endl;
 }
@@ -207,9 +257,9 @@ void GameState::displayBoard() {
 bool GameState::validMoveRemains() {
 
 	// Check to see if current player has any remaining pieces with legal moves available
-	for (int i = 0; i < ROWS; ++i)
+	for (int i = 0; i < row; ++i)
 	{
-		for (int j = 0; j < COLS; ++j)
+		for (int j = 0; j < col; ++j)
 		{
 			if (gameBoard.at(i).at(j) == currentPlayer)
 			{
@@ -226,7 +276,7 @@ bool GameState::validMoveRemains() {
 	return false;
 }
 
-bool GameState::pieceHasValidMove(int row, int col)
+bool GameState::pieceHasValidMove(int pieceRow, int pieceCol)
 {
 	// set turn to positive or negative 1 depending on direction player is moving
 	int turn;
@@ -235,18 +285,18 @@ bool GameState::pieceHasValidMove(int row, int col)
 	else
 		turn = 1;
 
-	if (row + turn >= 0 && row + turn < 8)
+	if (pieceRow + turn >= 0 && pieceRow + turn < row)
 	{
-		if ((col + 1 < 8) && gameBoard.at(row + turn).at(col + 1) == 'o')
+		if ((pieceCol + 1 < col) && gameBoard.at(pieceRow + turn).at(pieceCol + 1) == 'o')
 			return true;
-		if ((col - 1 >= 0) && gameBoard.at(row + turn).at(col - 1) == 'o')
+		if ((pieceCol - 1 >= 0) && gameBoard.at(pieceRow + turn).at(pieceCol - 1) == 'o')
 			return true;
 	}
 	return false;
 }
 
 // Checks if a piece has a valid jump available
-bool GameState::pieceHasValidJump(int row, int col)
+bool GameState::pieceHasValidJump(int pieceRow, int pieceCol)
 {
 	// set turn to positive or negative 1 depending on direction player is moving
 	int turn;
@@ -256,11 +306,11 @@ bool GameState::pieceHasValidJump(int row, int col)
 		turn = 1;
 
 	// Check for a valid jump move
-	if ((row + turn + turn) >= 0 && (row + turn + turn) < 8)
+	if ((pieceRow + turn + turn) >= 0 && (pieceRow + turn + turn) < row)
 	{
-		if ((col + 2 < 8) && gameBoard.at(row + turn + turn).at(col + 2) == 'o' && gameBoard.at(row + turn).at(col + 1) == opponent())
+		if ((pieceCol + 2 < col) && gameBoard.at(pieceRow + turn + turn).at(pieceCol + 2) == 'o' && gameBoard.at(pieceRow + turn).at(pieceCol + 1) == opponent())
 			return true;
-		if ((col - 2 >= 0) && gameBoard.at(row + turn + turn).at(col - 2) == 'o' && gameBoard.at(row + turn).at(col - 1) == opponent())
+		if ((pieceCol - 2 >= 0) && gameBoard.at(pieceRow + turn + turn).at(pieceCol - 2) == 'o' && gameBoard.at(pieceRow + turn).at(pieceCol - 1) == opponent())
 			return true;
 	}
 	return false;
@@ -345,4 +395,9 @@ bool GameState::moveIsValid(int rowFrom, int colFrom, int rowTo, int colTo)
 
 	// Returns false if the spot is more than 1 or 2 rows away
 	return false;
+}
+
+
+char GameState::getWinningPlayer() {
+	return winningPlayer;
 }
