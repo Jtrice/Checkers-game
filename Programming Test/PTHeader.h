@@ -13,7 +13,7 @@ public:
 	
 
 	GameState();
-	GameState(int rows, int cols);
+	GameState(int rows, int cols, int blackRows, int redRows);
 	//GameState(int row, int col, std::array<std::array<char, 8>, 8> gameBoard);
 	void takeTurn();
 	char getWinningPlayer();

@@ -27,7 +27,7 @@ GameState::GameState() {
 	std::cout << "\nPlayer is b, Computer is r\n";
 }
 
-GameState::GameState(int rows, int cols) {
+GameState::GameState(int rows, int cols, int blackRows, int redRows) {
 	// Set current player to black and winning player to none
 	currentPlayer = 'b';
 	winningPlayer = 'n';
@@ -39,9 +39,9 @@ GameState::GameState(int rows, int cols) {
 	for (int i = 0; i < row; i++)
 	{
 		char player;
-		if (i < 3)
+		if (i < blackRows)
 			player = 'b';
-		else if (i > row - 4)
+		else if (i > row - redRows + 1)
 			player = 'r';
 		else
 			player = 'o';
@@ -84,14 +84,13 @@ char GameState::opponent() {
 		return 'b';
 }
 
-// TODO Fix this
 // Check that the player's move is valid. If it is, make the move and return true. Else return false. 
 bool GameState::playerMove() {
 	// Variables to hold player's move
 	int inputRow;
 	char inputCol;
-	int row;
-	int col;
+	int moveRow;
+	int moveColumn;
 	std::string input;
 	int locationRow;
 	int locationColumn;
@@ -103,21 +102,21 @@ bool GameState::playerMove() {
 	std::stringstream(input) >> inputRow >> inputCol;
 
 	//convert raw input into proper indices
-	row = inputRow - 1;
-	col = int(inputCol) - 97;
+	moveRow = inputRow - 1;
+	moveColumn = int(inputCol) - 97;
 	
 	// Checks that indices are within range
-	if ((row < 0 || row > 7) || (col < 0 || col > 7))
+	if ((moveRow < 0 || moveRow >= row) || (moveColumn < 0 || moveColumn >= col))
 		return false;
 	
 	// verifies piece at indicated spot is player's
-	if (gameBoard.at(row).at(col) != 'b')
+	if (gameBoard.at(moveRow).at(moveColumn) != 'b')
 	{
 		return false;
 	}
 	
 	// verifies that piece has any valid moves
-	if (!pieceHasValidJump(row, col) && !pieceHasValidMove(row, col))
+	if (!pieceHasValidJump(moveRow, moveColumn) && !pieceHasValidMove(moveRow, moveColumn))
 	{
 		return false;
 	}
@@ -132,16 +131,16 @@ bool GameState::playerMove() {
 	locationColumn = int(inputCol) - 97;
 
 	// Checks that indices are within range
-	if ((locationRow < 0 || locationRow > 7) || (locationColumn < 0 || locationColumn > 7))
+	if ((locationRow < 0 || locationRow >= row) || (locationColumn < 0 || locationColumn >= col))
 		return false;
 
 	// verifies the indicated spot is open
-	if (moveIsValid(row, col, locationRow, locationColumn))
+	if (moveIsValid(moveRow, moveColumn, locationRow, locationColumn))
 	{
-		makeMove(row, col, locationRow, locationColumn);
-		row = locationRow;
-		col = locationColumn;
-		while (pieceHasValidJump(row, col))
+		makeMove(moveRow, moveColumn, locationRow, locationColumn);
+		moveRow = locationRow;
+		moveColumn = locationColumn;
+		while (pieceHasValidJump(moveRow, moveColumn))
 		{
 			// Handle multiple jumps
 			displayBoard();
@@ -156,15 +155,15 @@ bool GameState::playerMove() {
 			locationColumn = int(inputCol) - 97;
 
 			// Checks that indices are within range
-			if ((locationRow < 0 || locationRow > 7) || (locationColumn < 0 || locationColumn > 7))
+			if ((locationRow < 0 || locationRow >= row) || (locationColumn < 0 || locationColumn >= col))
 				return false;
 
 			// verifies the indicated spot is open
-			if (moveIsValid(row, col, locationRow, locationColumn))
+			if (moveIsValid(moveRow, moveColumn, locationRow, locationColumn))
 			{
-				makeMove(row, col, locationRow, locationColumn);
-				row = locationRow;
-				col = locationColumn;
+				makeMove(moveRow, moveColumn, locationRow, locationColumn);
+				moveRow = locationRow;
+				moveColumn = locationColumn;
 			}
 		}
 		return true;
@@ -228,7 +227,6 @@ void GameState::displayBoard() {
 		character++;
 	}
 	oss << "\n\n";
-	//oss << "\n     a   b   c   d   e   f   g   h\n\n";
 	for (int i = 0; i < row; ++i)
 	{
 		oss << std::setw(2) << (i + 1) << " ";
